@@ -7,7 +7,9 @@ defmodule FindMe.CLI do
   that displays our results
   """
   def run(argv) do
-    parse_args(argv)
+    argv
+      |> parse_args
+      |> process
   end
 
   @doc """
@@ -24,5 +26,16 @@ defmodule FindMe.CLI do
       { _, [ project, query ], _ } -> { project, query, @default_count }
       _ -> :help
     end
+  end
+
+  def process(:help) do
+    IO.puts """
+      usage: find_me <project> <search_string> [ count | #{@default_count} ]
+      """
+    System.stop(0)
+  end
+
+  def process({project, query, count}) do
+    FindMe.Github.fetch(project, query, count)
   end
 end
