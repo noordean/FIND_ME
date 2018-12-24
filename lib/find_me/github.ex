@@ -14,7 +14,19 @@ defmodule FindMe.Github do
 
   def handle_response({:ok, %{status_code: _, body: body}}), do: { :error, JSX.decode(body) }
 
+  def handle_response({:error, _}) do
+    IO.puts "Connection error!"
+    System.halt(2)
+  end
+
   def extract_json_response({:ok, {:ok, json_results}}), do: json_results
 
-  def extract_json_response({:error, {:ok, json_error}}), do: json_error
+  def extract_json_response({:error, {:ok, json_error}}) do
+    json_error["errors"]
+      |> Enum.at(0)
+      |> Map.get("message")
+      |> IO.puts
+
+    System.halt(2)
+  end
 end
