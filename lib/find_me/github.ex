@@ -8,20 +8,21 @@ defmodule FindMe.Github do
       |> handle_response
       |> extract_json_response
       |> extract_result_data
+      |> draw_table
   end
 
-  def handle_response({:ok, %{status_code: 200, body: body}}), do: { :ok, JSX.decode(body) }
+  defp handle_response({:ok, %{status_code: 200, body: body}}), do: { :ok, JSX.decode(body) }
 
-  def handle_response({:ok, %{status_code: _, body: body}}), do: { :error, JSX.decode(body) }
+  defp handle_response({:ok, %{status_code: _, body: body}}), do: { :error, JSX.decode(body) }
 
-  def handle_response({:error, _}) do
+  defp handle_response({:error, _}) do
     IO.puts "Connection error!"
     System.halt(2)
   end
 
-  def extract_json_response({:ok, {:ok, json_results}}), do: json_results
+  defp extract_json_response({:ok, {:ok, json_results}}), do: json_results
 
-  def extract_json_response({:error, {:ok, json_error}}) do
+  defp extract_json_response({:error, {:ok, json_error}}) do
     json_error["errors"]
       |> Enum.at(0)
       |> Map.get("message")
@@ -30,7 +31,7 @@ defmodule FindMe.Github do
     System.halt(2)
   end
 
-  def extract_result_data(json_results) do
+  defp extract_result_data(json_results) do
     IO.inspect Enum.map(json_results["items"], fn(result) ->
       matches = result["text_matches"] |> Enum.at(0)
       object_url = matches |> Map.get("object_url")
@@ -46,11 +47,40 @@ defmodule FindMe.Github do
     end)
   end
 
-  def extract_comment_number(object_url) do
+  defp extract_comment_number(object_url) do
     split_object_url = String.split(object_url, "/")
     comment = split_object_url |> Enum.at(-2)
     if comment == "comments" do
       "#discussion_r#{Enum.at(split_object_url, -1)}"
     end
+  end
+
+  defp draw_table(result_data) do
+    longest_user = columns(result_data, "User") |> longest_value
+    longest_link = columns(result_data, "Link") |> longest_value
+    longest_date = columns(result_data, "Date") |> longest_value
+    longest_content = 30
+
+    user_header = String.pad_trailing("User", longest_user)
+    date_header = String.pad_trailing("Date", longest_date)
+    link_header = String.pad_trailing("Link", longest_link)
+    content_header = String.pad_trailing("Content", longest_content)
+
+    user_dashes = String.duplicate("-", longest_user)
+    date_dashes = String.duplicate("-", longest_date)
+    link_dashes = String.duplicate("-", longest_link)
+    content_dashes = String.duplicate("-", longest_content)
+
+    IO.puts "|#{user_header}|#{date_header}|#{link_header}|#{content_header}|"
+    IO.puts "|#{user_dashes}|#{date_dashes}|#{link_dashes}|#{content_dashes}|"
+    for result <- result_data do
+      IO.puts "|#{result["User"] |> String.pad_trailing(longest_user)}|#{result["Date"] |> String.pad_trailing(longest_date)}|#{result["Link"] |> String.pad_trailing(longest_link)}|#{result["Content"] |> String.slice(0..26)}...|"
+    end
+  end
+
+  defp longest_value(columns), do: columns |> Enum.sort(&(String.length(&1) >= String.length(&2))) |> Enum.at(0) |> String.length
+
+  defp columns(result_data, column_name) do
+    for result <- result_data, do: result[column_name]
   end
 end
