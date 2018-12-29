@@ -32,7 +32,7 @@ defmodule FindMe.Github do
   end
 
   defp extract_result_data(json_results) do
-    IO.inspect Enum.map(json_results["items"], fn(result) ->
+    Enum.map(json_results["items"], fn(result) ->
       matches = result["text_matches"] |> Enum.at(0)
       object_url = matches |> Map.get("object_url")
       fragment = matches |> Map.get("fragment")
@@ -59,22 +59,19 @@ defmodule FindMe.Github do
     longest_user = columns(result_data, "User") |> longest_value
     longest_link = columns(result_data, "Link") |> longest_value
     longest_date = columns(result_data, "Date") |> longest_value
-    longest_content = 30
 
     user_header = String.pad_trailing("User", longest_user)
     date_header = String.pad_trailing("Date", longest_date)
     link_header = String.pad_trailing("Link", longest_link)
-    content_header = String.pad_trailing("Content", longest_content)
 
     user_dashes = String.duplicate("-", longest_user)
     date_dashes = String.duplicate("-", longest_date)
     link_dashes = String.duplicate("-", longest_link)
-    content_dashes = String.duplicate("-", longest_content)
 
-    IO.puts "|#{user_header}|#{date_header}|#{link_header}|#{content_header}|"
-    IO.puts "|#{user_dashes}|#{date_dashes}|#{link_dashes}|#{content_dashes}|"
+    IO.puts "|#{user_header}|#{date_header}|#{link_header}|"
+    IO.puts "|#{user_dashes}|#{date_dashes}|#{link_dashes}|"
     for result <- result_data do
-      IO.puts "|#{result["User"] |> String.pad_trailing(longest_user)}|#{result["Date"] |> String.pad_trailing(longest_date)}|#{result["Link"] |> String.pad_trailing(longest_link)}|#{result["Content"] |> String.slice(0..26)}...|"
+      IO.puts "|#{result["User"] |> String.pad_trailing(longest_user)}|#{result["Date"] |> String.pad_trailing(longest_date)}|#{result["Link"] |> String.pad_trailing(longest_link)}|"
     end
   end
 
