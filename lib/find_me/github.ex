@@ -4,7 +4,7 @@ defmodule FindMe.Github do
     "Accept": "application/vnd.github.v3.text-match+json"]
 
   def fetch(project, query, count) do
-    HTTPoison.get("https://api.github.com/search/issues?q=#{query}+type:pr+user:#{project}", @headers)
+    HTTPoison.get("https://api.github.com/search/issues?q=#{query}+type:pr+user:#{project}&sort=created&order=desc&per_page=#{count}", @headers)
       |> handle_response
       |> extract_json_response
       |> extract_result_data
